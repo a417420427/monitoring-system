@@ -1,7 +1,11 @@
 import { AppDataSource } from "../data-source";
 import { User } from "../entities/User";
 import bcrypt from "bcrypt";
-import { errorResponse, ServiceResponse, successResponse } from "./ResponseService";
+import {
+  errorResponse,
+  ServiceResponse,
+  successResponse,
+} from "./ResponseService";
 
 export class UserService {
   private userRepo = AppDataSource.getRepository(User);
@@ -10,7 +14,6 @@ export class UserService {
     return await this.userRepo.findOneBy({ id });
   }
 
-
   async getUserByUserName(username: string): Promise<User | null> {
     return await this.userRepo.findOneBy({ username });
   }
@@ -18,18 +21,30 @@ export class UserService {
     return await this.userRepo.findOneBy({ email });
   }
 
+  async getUserByUserNameOrEmail(identifier: string): Promise<User | null> {
+    return await this.userRepo.findOne({
+      where: [{ username: identifier }, { email: identifier }],
+    });
+  }
+
   async createUser(data: {
     email: string;
     password: string;
     username: string;
     wechatOpenid?: string;
-  }): Promise<ServiceResponse<User | any>> {
-    const { email, password, username, wechatOpenid } = data;
+  }): Promise<ServiceResponse<User | null>> {
+    const { email, password, username } = data;
 
-    // 检查手机号是否存在
+    // 检查邮箱是否存在
     const existMail = await this.getUserByEmail(email);
     if (existMail) {
-      return errorResponse("Email already registered");
+      return errorResponse("邮箱已注册");
+    }
+
+    // 检查邮箱是否存在
+    const existUsername = await this.getUserByUserName(username);
+    if (existUsername) {
+      return errorResponse("用户名已注册");
     }
 
     const passwordHash = await bcrypt.hash(password, 10);

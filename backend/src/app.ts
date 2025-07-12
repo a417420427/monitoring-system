@@ -27,7 +27,13 @@ app.use(cors(corsOptions));
 // app.options("*", cors(corsOptions)) // ← 重要：支持预检请求
 
 app.use('/api', (req, res, next) => {
-  console.log(`[REQUEST] ${req.method} ${req.path}`);
+   console.log({
+    method: req.method,
+    baseUrl: req.baseUrl,  // "/api"
+    path: req.path,        // "/register"
+    originalUrl: req.originalUrl,  // "/api/register"
+    url: req.url           // "/register"（不含 /api，但含查询参数）
+  });
   next();
 });
 

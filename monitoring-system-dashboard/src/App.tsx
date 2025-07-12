@@ -1,5 +1,5 @@
 import { initMonitor } from "../../sdk-monitor/src/index";
-
+import 'antd/dist/antd.css'
 function App() {
   initMonitor({
     appId: "your-app-id",

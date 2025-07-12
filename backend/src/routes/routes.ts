@@ -66,10 +66,12 @@ const models: TsoaRoute.Models = {
         "properties": {
             "id": {"dataType":"double","required":true},
             "passwordHash": {"dataType":"string"},
-            "username": {"dataType":"string"},
+            "username": {"dataType":"string","required":true},
             "createdAt": {"dataType":"datetime","required":true},
             "updatedAt": {"dataType":"datetime","required":true},
             "phone": {"dataType":"string"},
+            "email": {"dataType":"string"},
+            "lastLoginAt": {"dataType":"datetime"},
             "records": {"dataType":"array","array":{"dataType":"refObject","ref":"Project"},"required":true},
         },
         "additionalProperties": false,
@@ -224,6 +226,16 @@ const models: TsoaRoute.Models = {
             "timestamp": {"dataType":"double","required":true},
             "createdAt": {"dataType":"datetime","required":true},
             "project": {"ref":"Project","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ServiceResponse_null-or-_40_User-and-_token-string__41__": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "message": {"dataType":"string","required":true},
+            "data": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":[null]},{"dataType":"intersection","subSchemas":[{"ref":"User"},{"dataType":"nestedObjectLiteral","nestedProperties":{"token":{"dataType":"string","required":true}}}]}]},
         },
         "additionalProperties": false,
     },
@@ -728,7 +740,7 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsAuthController_loginByPassword: Record<string, TsoaRoute.ParameterSchema> = {
-                body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"username":{"dataType":"string"},"password":{"dataType":"string","required":true},"id":{"dataType":"double","required":true}}},
+                body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"email":{"dataType":"string"},"username":{"dataType":"string"},"password":{"dataType":"string","required":true}}},
         };
         app.post('/auth/login-by-password',
             ...(fetchMiddlewares<RequestHandler>(AuthController)),
@@ -758,7 +770,7 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsAuthController_register: Record<string, TsoaRoute.ParameterSchema> = {
-                body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"username":{"dataType":"string"},"password":{"dataType":"string","required":true},"id":{"dataType":"double","required":true}}},
+                body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"username":{"dataType":"string","required":true},"email":{"dataType":"string","required":true},"password":{"dataType":"string","required":true}}},
         };
         app.post('/auth/register',
             ...(fetchMiddlewares<RequestHandler>(AuthController)),

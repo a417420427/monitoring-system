@@ -1,13 +1,17 @@
-import axios, { type AxiosInstance, type InternalAxiosRequestConfig,type  AxiosResponse } from 'axios';
-import { message } from 'antd';
-import { useUserStore } from '@/store/user'
+import axios, {
+  type AxiosInstance,
+  type InternalAxiosRequestConfig,
+  type AxiosResponse,
+} from "axios";
+import { message } from "antd";
+import { useUserStore } from "@/store/user";
 
 // 创建 Axios 实例
 const http: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -19,6 +23,7 @@ http.interceptors.request.use(
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
+    console.log(config, "conf");
     return config;
   },
   (error) => {
@@ -29,10 +34,11 @@ http.interceptors.request.use(
 // 响应拦截器
 http.interceptors.response.use(
   (response: AxiosResponse) => {
-    return response.data;
+    console.log(response, 'rrrr')
+    return response;
   },
   (error) => {
-    const msg = error?.response?.data?.message || '请求失败';
+    const msg = error?.response?.data?.message || "请求失败";
     message.error(msg);
     return Promise.reject(error);
   }
