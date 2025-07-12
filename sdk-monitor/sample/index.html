@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sdk-monitor-sample</title>
+
+    <script src="../dist/monitor-sdk.umd.js"></script>
+
+    <script>
+           MonitorSDK.initMonitor({
+          appId: "your-app-id",
+          reportUrl: "https://api.yourdomain.com/monitor",
+          userId: "user-123",
+          debug: true,
+        });
+
+    </script>
+  </head>
+  <body>
+
+    <button class="btn-submit">Submit Order</button>
+
+    <div class="product-card">
+      <h2>Product A</h2>
+      <p>Price: $10</p>
+    </div>
+    
+
+    <script>
+
+        // 手动埋点示例
+        MonitorSDK.trackClick(".btn-submit", { action: "Submit Order" });
+        MonitorSDK.trackExposure(".product-card");
+    </script>
+  </body>
+</html>
