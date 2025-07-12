@@ -24,6 +24,12 @@ export class Project {
   @CreateDateColumn()
   createdAt!: Date;
 
+  @Column({ type: "varchar", length: 32 })
+  category!: "web" | "h5" | "miniapp" | "backend"; // 暂定分类
+
+  @Column({ type: "enum", enum: ["active", "inactive"], default: "active" })
+  status: "active" | "inactive";
+
   @OneToMany(() => ErrorLog, (error) => error.project)
   errors!: ErrorLog[];
 

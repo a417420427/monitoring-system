@@ -8,6 +8,8 @@ import { StayDurationController } from './../controllers/StayDurationController'
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ResourceErrorController } from './../controllers/ResourceErrorController';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { ProjectController } from './../controllers/ProjectController';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { PerformanceController } from './../controllers/PerformanceController';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { PageViewController } from './../controllers/PageViewController';
@@ -38,6 +40,8 @@ const models: TsoaRoute.Models = {
             "name": {"dataType":"string","required":true},
             "appId": {"dataType":"string","required":true},
             "createdAt": {"dataType":"datetime","required":true},
+            "category": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["web"]},{"dataType":"enum","enums":["h5"]},{"dataType":"enum","enums":["miniapp"]},{"dataType":"enum","enums":["backend"]}],"required":true},
+            "status": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["active"]},{"dataType":"enum","enums":["inactive"]}],"required":true},
             "errors": {"dataType":"array","array":{"dataType":"refObject","ref":"ErrorLog"},"required":true},
             "user": {"ref":"User","required":true},
         },
@@ -111,6 +115,31 @@ const models: TsoaRoute.Models = {
             "timestamp": {"dataType":"double","required":true},
             "createdAt": {"dataType":"datetime","required":true},
             "project": {"ref":"Project","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ServiceResponse_Project-or-null_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "message": {"dataType":"string","required":true},
+            "data": {"dataType":"union","subSchemas":[{"ref":"Project"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Partial_Project_": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"id":{"dataType":"double"},"name":{"dataType":"string"},"appId":{"dataType":"string"},"createdAt":{"dataType":"datetime"},"category":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["web"]},{"dataType":"enum","enums":["h5"]},{"dataType":"enum","enums":["miniapp"]},{"dataType":"enum","enums":["backend"]}]},"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["active"]},{"dataType":"enum","enums":["inactive"]}]},"errors":{"dataType":"array","array":{"dataType":"refObject","ref":"ErrorLog"}},"user":{"ref":"User"}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ServiceResponse__data-Project-Array--total-number--page-number--size-number_-or-null_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "message": {"dataType":"string","required":true},
+            "data": {"dataType":"union","subSchemas":[{"dataType":"nestedObjectLiteral","nestedProperties":{"size":{"dataType":"double","required":true},"page":{"dataType":"double","required":true},"total":{"dataType":"double","required":true},"data":{"dataType":"array","array":{"dataType":"refObject","ref":"Project"},"required":true}}},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
@@ -366,6 +395,160 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'getByProject',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsProjectController_create: Record<string, TsoaRoute.ParameterSchema> = {
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+                body: {"in":"body","name":"body","required":true,"ref":"Partial_Project_"},
+        };
+        app.post('/projects',
+            ...(fetchMiddlewares<RequestHandler>(ProjectController)),
+            ...(fetchMiddlewares<RequestHandler>(ProjectController.prototype.create)),
+
+            async function ProjectController_create(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsProjectController_create, request, response });
+
+                const controller = new ProjectController();
+
+              await templateService.apiHandler({
+                methodName: 'create',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsProjectController_getAllByUser: Record<string, TsoaRoute.ParameterSchema> = {
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+                page: {"default":1,"in":"query","name":"page","dataType":"double"},
+                size: {"default":10,"in":"query","name":"size","dataType":"double"},
+        };
+        app.get('/projects/list',
+            ...(fetchMiddlewares<RequestHandler>(ProjectController)),
+            ...(fetchMiddlewares<RequestHandler>(ProjectController.prototype.getAllByUser)),
+
+            async function ProjectController_getAllByUser(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsProjectController_getAllByUser, request, response });
+
+                const controller = new ProjectController();
+
+              await templateService.apiHandler({
+                methodName: 'getAllByUser',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsProjectController_getById: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"query","name":"id","required":true,"dataType":"double"},
+        };
+        app.get('/projects/by-id',
+            ...(fetchMiddlewares<RequestHandler>(ProjectController)),
+            ...(fetchMiddlewares<RequestHandler>(ProjectController.prototype.getById)),
+
+            async function ProjectController_getById(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsProjectController_getById, request, response });
+
+                const controller = new ProjectController();
+
+              await templateService.apiHandler({
+                methodName: 'getById',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsProjectController_getByAppId: Record<string, TsoaRoute.ParameterSchema> = {
+                appId: {"in":"query","name":"appId","required":true,"dataType":"string"},
+        };
+        app.get('/projects/by-appId',
+            ...(fetchMiddlewares<RequestHandler>(ProjectController)),
+            ...(fetchMiddlewares<RequestHandler>(ProjectController.prototype.getByAppId)),
+
+            async function ProjectController_getByAppId(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsProjectController_getByAppId, request, response });
+
+                const controller = new ProjectController();
+
+              await templateService.apiHandler({
+                methodName: 'getByAppId',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsProjectController_updateStatus: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"status":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["active"]},{"dataType":"enum","enums":["inactive"]}],"required":true}}},
+        };
+        app.patch('/projects/:id/status',
+            ...(fetchMiddlewares<RequestHandler>(ProjectController)),
+            ...(fetchMiddlewares<RequestHandler>(ProjectController.prototype.updateStatus)),
+
+            async function ProjectController_updateStatus(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsProjectController_updateStatus, request, response });
+
+                const controller = new ProjectController();
+
+              await templateService.apiHandler({
+                methodName: 'updateStatus',
                 controller,
                 response,
                 next,
