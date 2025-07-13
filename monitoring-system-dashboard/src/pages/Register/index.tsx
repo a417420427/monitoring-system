@@ -24,9 +24,12 @@ const Register = () => {
         return;
       }
 
+      console.log(values, 's');
+
       const { data, status } = await register({
         username: values.username,
         password: values.password,
+        email: values.email,
       });
 
       if (status === 200 && data.success && data.data) {

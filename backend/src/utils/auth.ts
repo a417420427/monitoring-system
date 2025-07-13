@@ -7,7 +7,6 @@ export async function expressAuthentication(
 ): Promise<any> {
   const authHeader = request.headers.authorization;
 
-  console.log(authHeader, 'ssss')
   if (!authHeader) throw new Error("No authorization header");
 
   const tokenMatch = authHeader.match(/^Bearer (.+)$/);

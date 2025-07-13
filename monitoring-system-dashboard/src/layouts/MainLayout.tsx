@@ -16,12 +16,13 @@ const { Title } = Typography;
 
 const items = [
   { key: "/", icon: <PieChartOutlined />, label: "首页" },
-  { key: "2", icon: <DesktopOutlined />, label: "性能" },
+  { key: "/performanceDashboard", icon: <DesktopOutlined />, label: "性能" },
   { key: "3", icon: <UserOutlined />, label: "JS错误" },
   { key: "4", icon: <TeamOutlined />, label: "行为" },
   { key: "5", icon: <FileOutlined />, label: "设置" },
-  { key: "/projects", icon: <FileOutlined />, label: "项目" },
-  { key: "/users", icon: <UserOutlined />, label: "用户" },
+  { key: "/projectList", icon: <FileOutlined />, label: "项目" },
+  { key: "/userList", icon: <UserOutlined />, label: "用户" },
+  { key: "/apiKeyManager", icon: <UserOutlined />, label: "ApiKey" },
 ];
 
 const Home: React.FC = () => {

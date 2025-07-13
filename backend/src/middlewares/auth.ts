@@ -12,7 +12,7 @@ export const authMiddleware = (
 ): void => {
   const publicPaths = ["/login", "/auth/login-by-password", "/register"]; // 不需要鉴权的路径
 
-  if (publicPaths.includes(req.path)) {
+  if (publicPaths.includes(req.path) || req.path.startsWith('/api/report')) {
     return next(); // 放行
   }
 

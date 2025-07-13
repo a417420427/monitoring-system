@@ -6,9 +6,12 @@ import {
   CreateDateColumn,
   OneToMany,
   ManyToOne,
+  UpdateDateColumn,
 } from "typeorm";
 import { ErrorLog } from "./ErrorLog";
 import { User } from "./User";
+import { PerformanceLog } from "./PerformanceLog";
+import { ApiKey } from "./ApiKey";
 
 @Entity("projects")
 export class Project {
@@ -24,6 +27,9 @@ export class Project {
   @CreateDateColumn()
   createdAt!: Date;
 
+  @UpdateDateColumn()
+  updatedAt?: Date;
+
   @Column({ type: "varchar", length: 32 })
   category!: "web" | "h5" | "miniapp" | "backend"; // 暂定分类
 
@@ -32,6 +38,14 @@ export class Project {
 
   @OneToMany(() => ErrorLog, (error) => error.project)
   errors!: ErrorLog[];
+
+
+  @OneToMany(() => PerformanceLog, (performance) => performance.project)
+  performanceLog!: PerformanceLog[];
+
+
+  @OneToMany(() => ApiKey, (performance) => performance.project)
+  apiKeys?: ApiKey[];
 
   @ManyToOne(() => User, (user) => user.id)
   user!: User;

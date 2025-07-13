@@ -1,4 +1,4 @@
-import { initConfig, MonitorConfig } from "./config";
+import { initConfig, type MonitorConfig } from "./config";
 
 import { collectPerformanceMetrics } from "./performance";
 

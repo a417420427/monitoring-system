@@ -1,56 +1,102 @@
 import { report } from "./reporter";
+import { onLCP, onFCP, onINP, onCLS, onTTFB } from "web-vitals";
 
-/**
- * 收集页面导航相关的性能时间指标
- * 
- * @param timing PerformanceNavigationTiming对象，包含了页面导航和加载相关的性能时间信息
- */
-function collectNavigationTiming(timing: PerformanceNavigationTiming) {
-  const metrics = {
-    fp: timing.responseStart - timing.requestStart,
-    ttfb: timing.responseStart,
-    domContentLoaded: timing.domContentLoadedEventEnd,
-    load: timing.loadEventEnd,
-  };
+// 指标缓存和定时器管理
+const metricsBuffer: Record<string, number> = {};
+let reportTimeout: number | null = null;
 
-  report(metrics, "performance");
+// 缓冲上报函数，1秒内收集指标，合并成一次请求
+function bufferedReport(key: string, value: number) {
+  metricsBuffer[key] = value;
+  console.log(key, value, 'ss')
+  if (reportTimeout === null) {
+    reportTimeout = window.setTimeout(() => {
+      report({ ...metricsBuffer }, "performance");
+      reportTimeout = null;
+      // 清空缓存
+      Object.keys(metricsBuffer).forEach((k) => delete metricsBuffer[k]);
+    }, 1000);
+  }
 }
 
-/**
- * 收集页面渲染相关的性能指标
- * 该函数通过获取performance.getEntriesByType("paint")获取页面渲染过程中的各种绘画事件（如首次内容绘制、首次有效绘制等）
- * 并对每个事件进行遍历，调用report函数将每个事件的名称和开始时间作为性能数据上报
- */
+// 页面卸载时用 report 方法发送剩余指标
+window.addEventListener("beforeunload", () => {
+  if (Object.keys(metricsBuffer).length > 0) {
+    // 这里直接调用 report，保持统一
+    report({ ...metricsBuffer }, "performance");
+
+    // 清空缓存，防止重复发送
+    Object.keys(metricsBuffer).forEach((k) => delete metricsBuffer[k]);
+  }
+});
+
+// ⏱️ 1. 导航阶段指标
+function collectNavigationTiming(timing: PerformanceNavigationTiming) {
+  bufferedReport("dnsTime", timing.domainLookupEnd - timing.domainLookupStart);
+  bufferedReport("tcpTime", timing.connectEnd - timing.connectStart);
+  bufferedReport(
+    "sslTime",
+    timing.secureConnectionStart > 0
+      ? timing.connectEnd - timing.secureConnectionStart
+      : 0
+  );
+  bufferedReport("ttfb", timing.responseStart - timing.requestStart);
+  bufferedReport("responseTime", timing.responseEnd - timing.responseStart);
+  bufferedReport(
+    "domContentLoaded",
+    timing.domContentLoadedEventEnd - timing.startTime
+  );
+  bufferedReport("domParseTime", timing.domComplete - timing.domInteractive);
+  bufferedReport("loadTime", timing.loadEventEnd - timing.startTime);
+  bufferedReport("fp", timing.responseStart - timing.requestStart);
+}
+
+// 🎨 2. Paint 阶段指标（FCP/FP）
 function collectPaintMetrics() {
   const entries = performance.getEntriesByType("paint");
   entries.forEach((entry) => {
-    report({ name: entry.name, value: entry.startTime }, "performance");
+    bufferedReport(entry.name, entry.startTime);
   });
 }
 
-/**
- * 收集性能度量指标
- *
- * 此函数旨在在页面加载完成后收集性能度量指标。首先，它尝试获取导航时间信息，并调用`collectNavigationTiming`函数（假设已定义）来进一步处理这些信息。
- * 如果找不到导航时间信息，则会打印一条警告消息。然后，它会调用`collectPaintMetrics`函数（假设已定义）来收集绘制相关的性能度量指标。
- *
- * 如果文档已经加载完成（`document.readyState`为"complete"），则立即收集性能度量指标。
- * 否则，它会监听`load`事件，并在事件触发时（只触发一次）收集性能度量指标。
- */
-export function collectPerformanceMetrics() {
-  console.log("collectPerformanceMetrics");
+// 🐢 3. Web Vitals：LCP / FID / CLS / INP
+function collectWebVitals() {
+  onLCP((metric) => bufferedReport("lcp", metric.value));
+  onFCP((metric) => bufferedReport("fcp", metric.value));
+  onTTFB((metric) => bufferedReport("ttfb", metric.value));
+  onINP((metric) => bufferedReport("inp", metric.value));
+  onCLS((metric) => bufferedReport("cls", metric.value));
+}
 
+// 🚧 4. 阻塞时间（TBT）
+function collectLongTasks() {
+  const observer = new PerformanceObserver((list) => {
+    let totalBlockingTime = 0;
+    for (const entry of list.getEntries()) {
+      const blocking = entry.duration - 50;
+      if (blocking > 0) {
+        totalBlockingTime += blocking;
+      }
+    }
+    bufferedReport("tbt", totalBlockingTime);
+  });
+
+  observer.observe({ type: "longtask", buffered: true });
+}
+
+// 📊 5. 主入口（on load 后统一采集）
+export function collectPerformanceMetrics() {
   const collect = () => {
     const [timing] = performance.getEntriesByType(
       "navigation"
     ) as PerformanceNavigationTiming[];
     if (timing) {
       collectNavigationTiming(timing);
-    } else {
-      console.warn("No navigation timing entry found");
     }
 
     collectPaintMetrics();
+    collectWebVitals();
+    collectLongTasks();
   };
 
   if (document.readyState === "complete") {

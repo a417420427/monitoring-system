@@ -1,7 +1,10 @@
 {
   "entryFile": "src/app.ts",
   "noImplicitAdditionalProperties": "throw-on-extras",
-  "controllerPathGlobs": ["src/controllers/*.ts"],
+  "controllerPathGlobs": [
+    "src/controllers/*.ts",
+    "src/controllers/reporting/*.ts"
+  ],
   "spec": {
     "outputDirectory": "src/dist",
     "specVersion": 3,
@@ -11,6 +14,6 @@
   },
   "routes": {
     "routesDir": "src/routes",
-     "authenticationModule": "src/utils/auth.ts"
+    "authenticationModule": "src/utils/auth.ts"
   }
 }

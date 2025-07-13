@@ -15,7 +15,7 @@ export const authMiddleware = async (
 ): Promise<void> => {
   const publicPaths = ["/auth/login", "/auth/login-by-password", "/auth/register"]; // 不需要鉴权的路径
 
-  if (publicPaths.includes(req.path)) {
+  if (publicPaths.includes(req.path) || req.path.startsWith('/report')) {
     return next(); // 放行
   }
 

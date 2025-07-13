@@ -2,33 +2,74 @@ import { report } from './reporter'
 
 /**
  * 初始化网络错误监听器
- * 此函数会覆盖window.fetch方法，以监听并报告网络请求的错误。
- * 如果fetch请求失败（非2xx响应或抛出异常），则会调用report函数报告错误信息。
- * 报告的信息包括请求的URL、状态码（或错误信息）、请求耗时等。
+ * 此函数会拦截fetch和XHR请求，以监听网络错误
  */
 export function initNetworkErrorListener() {
-  const originFetch = window.fetch
+  interceptFetch();
+  interceptXHR();
+}
+
+function interceptFetch() {
+  const originalFetch = window.fetch;
+
   window.fetch = async (...args) => {
-    const start = performance.now()
+    const [url, config] = args;
+
     try {
-      const res = await originFetch(...args)
-      const duration = performance.now() - start
+      const res = await originalFetch(...args);
       if (!res.ok) {
         report({
-          url: res.url,
+          url,
           status: res.status,
-          duration,
-        }, 'fetchError')
+          method: config?.method || 'GET',
+          type: 'fetch',
+          timestamp: Date.now(),
+        }, 'networkError');
       }
-      return res
+      return res;
     } catch (err) {
-      const duration = performance.now() - start
       report({
-        url: (args[0] as string),
-        error: err.message,
-        duration,
-      }, 'fetchError')
-      throw err
+        url,
+        error: String(err),
+        method: config?.method || 'GET',
+        type: 'fetch',
+        timestamp: Date.now(),
+      }, 'networkError');
+      throw err;
     }
-  }
+  };
+}
+
+function interceptXHR() {
+  const originalOpen = XMLHttpRequest.prototype.open;
+  const originalSend = XMLHttpRequest.prototype.send;
+
+  XMLHttpRequest.prototype.open = function (method: string, url: string) {
+    (this as any)._method = method;
+    (this as any)._url = url;
+    // @ts-ignore
+    return originalOpen.apply(this, arguments);
+  };
+
+  XMLHttpRequest.prototype.send = function () {
+    const xhr = this;
+
+    xhr.addEventListener('loadend', function () {
+      const status = xhr.status;
+      const url = (xhr as any)._url;
+      const method = (xhr as any)._method;
+
+      if (status >= 400 || status === 0) {
+        report({
+          url,
+          status,
+          method,
+          type: 'xhr',
+          timestamp: Date.now(),
+        }, 'networkError');
+      }
+    });
+    // @ts-ignore
+    return originalSend.apply(this, arguments);
+  };
 }

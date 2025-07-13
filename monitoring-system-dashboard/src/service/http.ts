@@ -38,6 +38,11 @@ http.interceptors.response.use(
     return response;
   },
   (error) => {
+    console.log(error, 'r')
+    if(error.status === 401) {
+      window.location.href = "/login";
+return Promise.reject(error);
+    }
     const msg = error?.response?.data?.message || "请求失败";
     message.error(msg);
     return Promise.reject(error);

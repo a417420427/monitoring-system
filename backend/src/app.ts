@@ -8,6 +8,7 @@ import * as swaggerDocument from "./dist/swagger.json"; // 这里路径要确保
 import cors from "cors";
 import { authMiddleware } from "./middlewares/authMiddleware";
 import { errorHandler } from "./middlewares/errorHandler";
+import { apiKeyMiddleware } from "./middlewares/apiKeyMiddleware";
 
 
 
@@ -27,13 +28,6 @@ app.use(cors(corsOptions));
 // app.options("*", cors(corsOptions)) // ← 重要：支持预检请求
 
 app.use('/api', (req, res, next) => {
-   console.log({
-    method: req.method,
-    baseUrl: req.baseUrl,  // "/api"
-    path: req.path,        // "/register"
-    originalUrl: req.originalUrl,  // "/api/register"
-    url: req.url           // "/register"（不含 /api，但含查询参数）
-  });
   next();
 });
 
@@ -55,6 +49,8 @@ AppDataSource.initialize()
     RegisterRoutes(apiRouter);
 
     app.use("/api", authMiddleware, apiRouter);
+    app.use("/api", apiKeyMiddleware, apiRouter);
+
 
     // 错误处理中间件一定要放在路由注册后面
 

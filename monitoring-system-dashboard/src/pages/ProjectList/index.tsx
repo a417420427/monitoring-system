@@ -22,6 +22,10 @@ import {
   updateProject,
   type ProjectResponse,
 } from "@/service/api/project";
+import dayjs from "dayjs";
+import { initMonitor } from "../../../../sdk-monitor/src";
+import { useUserStore } from "@/store/user";
+import { useNavigate } from "react-router-dom";
 
 const { Title } = Typography;
 
@@ -31,8 +35,9 @@ const ProjectList: React.FC = () => {
   const [projects, setProjects] = useState(initialProjects);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const navigate = useNavigate()
   const [form] = Form.useForm();
-
+  const store = useUserStore();
   const handleCreate = async () => {
     console.log(isEditing);
 
@@ -88,6 +93,16 @@ const ProjectList: React.FC = () => {
     const { data, status } = response;
     if (status === 200 && data.data && data.success) {
       setProjects(data.data!.data);
+
+      if (data.data.total) {
+        const user = store.userInfo!;
+        initMonitor({
+          appId: data.data.data[0].appId + "",
+          userId: user.id,
+          debug: true,
+          reportUrl: "http://localhost:5173/api/report",
+        });
+      }
       // setProjects(data.data)
     }
   };
@@ -110,8 +125,25 @@ const ProjectList: React.FC = () => {
       dataIndex: "appId",
     },
     {
+      title: 'API Key',
+      dataIndex: 'id',
+      render: (id: string) => {
+        return <Tag  onClick={() => navigate(`/apiKeyManager/${id}`)} style={{ cursor: 'pointer' }}>查看</Tag>;
+      }
+    },
+    {
       title: "创建时间",
       dataIndex: "createdAt",
+      render(text) {
+        return dayjs(text).format("YYYY-MM-DD HH:mm:ss");
+      },
+    },
+    {
+      title: "更新时间",
+      dataIndex: "updatedAt",
+      render(text) {
+        return dayjs(text).format("YYYY-MM-DD HH:mm:ss");
+      },
     },
     {
       title: "状态",

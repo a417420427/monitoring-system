@@ -1,18 +1,39 @@
 import { report } from './reporter'
 
 /**
- * 初始化资源错误监听器
- * 该函数为全局window对象添加了一个捕获错误事件的事件监听器，当资源（如图片、脚本、链接）加载失败时，会触发该监听器。
- * 如果错误事件的目标是一个图片、脚本或链接元素，则会调用report函数来报告这个错误。
+ * 采集资源加载错误：图片、脚本、样式、媒体、iframe等
  */
 export function initResourceErrorListener() {
-  window.addEventListener('error', (event: Event) => {
-    const target = event.target as HTMLElement
-    if (target && (target.tagName === 'IMG' || target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
-      report({
-        tagName: target.tagName,
-        src: (target as any).src || (target as any).href,
-      }, 'resourceError')
-    }
-  }, true)
+  window.addEventListener(
+    'error',
+    (event: Event) => {
+      const target = event.target as HTMLElement;
+
+      if (!target) return;
+
+      const tagName = target.tagName.toUpperCase();
+
+      // 支持的资源类型
+      const isResource =
+        ['IMG', 'SCRIPT', 'LINK', 'IFRAME', 'VIDEO', 'AUDIO'].includes(tagName);
+
+      if (!isResource) return;
+
+      const url = (target as any).src || (target as any).href || '';
+
+      if (!url) return;
+
+      const errorInfo = {
+        tagName,
+        url,
+        type: (target as any).type || '',
+        outerHTML: target.outerHTML.slice(0, 300), // 防止过长
+        pageURL: location.href,
+        timestamp: Date.now(),
+      };
+
+      report(errorInfo, 'resourceError');
+    },
+    true // useCapture = true，捕获阶段监听
+  );
 }

@@ -1,36 +1,41 @@
-import { report } from "./reporter";
+import { report } from './reporter'
 
 /**
- * 初始化JavaScript错误监听器。
- *
- * 该函数会监听window上的'error'和'unhandledrejection'事件，用于捕获JavaScript运行时的错误和未处理的Promise拒绝。
- * 当捕获到错误或未处理的Promise拒绝时，会将这些信息打印到控制台，并通过report函数进行上报。
- * 
- * 'error'事件包含错误信息、行号、列号以及具体的错误对象。
- * 'unhandledrejection'事件包含未处理的Promise拒绝的原因，可能是一个错误对象或者任何值。
+ * 初始化网络错误监听器
+ * 此函数会覆盖window.fetch方法，以监听并报告网络请求的错误。
+ * 如果fetch请求失败（非2xx响应或抛出异常），则会调用report函数报告错误信息。
+ * 报告的信息包括请求的URL、状态码（或错误信息）、请求耗时等。
  */
 export function initJsErrorListener() {
-  window.addEventListener("error", ({ message, lineno, colno, error }) => {
-    console.log(message, lineno, colno, error);
-    report(
-      {
-        message,
+  window.addEventListener("error", (event: ErrorEvent) => {
+    // 过滤资源加载错误（已由 resourceError 捕获）
+    if (event.target !== window) return;
 
-        lineno,
-        colno,
-        stack: error?.stack,
-      },
-      "jsError"
-    );
+    const errorInfo = {
+      message: event.message,
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+      stack: event.error?.stack || null,
+      type: "jsError",
+      pageURL: location.href,
+      timestamp: Date.now(),
+    };
+
+    report(errorInfo, "jsError");
   });
 
   window.addEventListener("unhandledrejection", (event) => {
-    report(
-      {
-        message: event.reason?.message || "unhandledrejection",
-        stack: event.reason?.stack,
-      },
-      "jsError"
-    );
+    const reason = event.reason;
+
+    const errorInfo = {
+      message: reason?.message || String(reason),
+      stack: reason?.stack || null,
+      type: "promiseError",
+      pageURL: location.href,
+      timestamp: Date.now(),
+    };
+
+    report(errorInfo, "jsError");
   });
 }
