@@ -12,11 +12,14 @@ import {
   Select,
   Radio,
   type TableProps,
+  Popconfirm,
 } from "antd";
 import {
   categoryMaps,
   createProject,
+  deleteProject,
   getProjects,
+  updateProject,
   type ProjectResponse,
 } from "@/service/api/project";
 
@@ -31,19 +34,33 @@ const ProjectList: React.FC = () => {
   const [form] = Form.useForm();
 
   const handleCreate = async () => {
+    console.log(isEditing);
+
     try {
       const values = await form.validateFields();
-      const response = await createProject({
-        name: values.name,
-        category: values.category,
-      });
+      console.log(values, isEditing);
+      if (isEditing) {
+        const response = await updateProject(values.id, {
+          status: values.status,
+        });
+        const { data, status } = response;
+        if (status === 200 && data.data) {
+          message.success("项目修改成功");
+          initProjects();
+        }
+      } else {
+        const response = await createProject({
+          name: values.name,
+          category: values.category,
+        });
 
-      const { data, status } = response;
-      if (status === 200 && data.data) {
-        message.success("项目创建成功");
-
-        initProjects();
+        const { data, status } = response;
+        if (status === 200 && data.data) {
+          message.success("项目创建成功");
+          initProjects();
+        }
       }
+
       form.resetFields();
       setIsModalOpen(false);
     } catch (err) {
@@ -52,6 +69,14 @@ const ProjectList: React.FC = () => {
     }
   };
 
+  const handleDelete = async (id: number) => {
+    const response = await deleteProject(id);
+    const { data, status } = response;
+    if (status === 200 && data.success) {
+      message.success("项目删除成功");
+      initProjects();
+    }
+  };
   const onEditRow = (row: ProjectResponse) => {
     setIsEditing(true);
     form.setFieldsValue(row);
@@ -104,9 +129,17 @@ const ProjectList: React.FC = () => {
           <Button onClick={() => onEditRow(record)} type="link">
             编辑
           </Button>
-          <Button type="link" danger>
-            删除
-          </Button>
+          <Popconfirm
+            placement="top"
+            title={"是否确定删除该项目"}
+            okText="是"
+            cancelText="否"
+            onConfirm={() => handleDelete(record.id)}
+          >
+            <Button type="link" danger>
+              删除
+            </Button>
+          </Popconfirm>
         </Space>
       ),
     },

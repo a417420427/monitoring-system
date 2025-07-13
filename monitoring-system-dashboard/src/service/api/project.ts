@@ -36,3 +36,11 @@ export const getProjects = () => {
     }>
   >("/projects/list");
 };
+
+export const deleteProject = (id: number) => {
+  return http.delete<ServiceResponse<ProjectResponse>>(`/projects/${id}`);
+};
+
+export const updateProject = (id: number, data: {status: 'active' | 'inactive'}) => {
+  return http.patch<ServiceResponse<ProjectResponse>>(`/projects/${id}/status`, data);
+};

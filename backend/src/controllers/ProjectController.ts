@@ -10,6 +10,7 @@ import {
   Patch,
   Path,
   Request,
+  Delete,
 } from "tsoa";
 import { ProjectService } from "../services/ProjectService";
 import { Project } from "../entities/Project";
@@ -136,4 +137,25 @@ export class ProjectController extends Controller {
       return errorResponse("Failed to update project status");
     }
   }
+
+  /**
+ * 删除项目接口
+ * DELETE /projects/{id}
+ */
+@Delete("/{id}")
+public async deleteProject(
+  @Path() id: number
+): Promise<ServiceResponse<null>> {
+  try {
+    const success = await this.service.delete(id);
+    if (!success) {
+      this.setStatus(404);
+      return errorResponse("未找到项目");
+    }
+    return successResponse(null, "项目删除成功");
+  } catch (error) {
+    this.setStatus(500);
+    return errorResponse("服务错误，删除项目失败");
+  }
+}
 }

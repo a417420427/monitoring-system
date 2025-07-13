@@ -37,6 +37,10 @@ export class ProjectService {
     });
   }
 
+  async delete(id: number) {
+    return await this.repo.delete(id);
+  }
+
   async updateStatus(
     id: number,
     status: "active" | "inactive"
