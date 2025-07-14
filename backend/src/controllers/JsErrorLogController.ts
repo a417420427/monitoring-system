@@ -1,18 +1,20 @@
 import { Controller, Post, Route, Body, Tags, Get, Query } from "tsoa";
-import { PerformanceService } from "../services/PerformanceService";
-import { PerformanceLog } from "../entities/PerformanceLog";
-import { Project } from "../entities/Project";
+import { JsErrorLogService } from "../services/JsErrorLogService";
+import { JsErrorLog } from "../entities/JsErrorLog";
+
 import { AppDataSource } from "../data-source";
 import {
   errorResponse,
   ServiceResponse,
   successResponse,
 } from "../services/ResponseService";
+import { Project } from "../entities/Project";
 
-@Route("report/performance")
-@Tags("Performance")
-export class PerformanceController extends Controller {
-  private service = new PerformanceService();
+
+@Route("report/jsErrorLog")
+@Tags("JsErrorLog")
+export class JsErrorController extends Controller {
+  private service = new JsErrorLogService();
   private repo = AppDataSource.getRepository(Project);
   // 单条上报
   @Post("/")
@@ -21,6 +23,7 @@ export class PerformanceController extends Controller {
   ): Promise<{ success: boolean; message?: string }> {
     const { config = {}, payload = {}, timestamp, url } = body;
 
+    console.log(url, 'uuuuuuu')
     if (!config.projectId) {
       this.setStatus(400);
       return { success: false, message: "未找到项目id" };
@@ -34,8 +37,8 @@ export class PerformanceController extends Controller {
 
     try {
       await this.service.create({
-        url,
         projectId: config.projectId,
+        url,
         lang: config.lang,
         userAgent: config.userAgent,
         os: config.os,
@@ -46,6 +49,7 @@ export class PerformanceController extends Controller {
         region: config.region,
         city: config.city,
         clientTimestamp: timestamp,
+        message: payload.message,
         payload: payload,
         project: project,
       });
@@ -60,7 +64,7 @@ export class PerformanceController extends Controller {
   // 批量上报接口
   @Post("/batch")
   public async batchReport(
-    @Body() body: Partial<PerformanceLog>[]
+    @Body() body: Partial<JsErrorLog>[]
   ): Promise<{ success: boolean; message?: string }> {
     if (!Array.isArray(body) || body.length === 0) {
       this.setStatus(400);
@@ -90,7 +94,7 @@ export class PerformanceController extends Controller {
     @Query() country?: string,
     @Query() startTime?: string,
     @Query() endTime?: string
-  ): Promise<ServiceResponse<PerformanceLog[] | null>> {
+  ): Promise<ServiceResponse<JsErrorLog[] | null>> {
 
 
     try {

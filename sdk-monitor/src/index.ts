@@ -17,8 +17,12 @@ import {
 
 import { report } from "./reporter";
 
-export function initMonitor(options: MonitorConfig) {
-  initConfig(options);
+let isInited  = false
+export async function initMonitor(options: MonitorConfig) {
+  if(isInited) {
+    return
+  }
+  await initConfig(options);
   collectPerformanceMetrics();
   initJsErrorListener();
   initResourceErrorListener();

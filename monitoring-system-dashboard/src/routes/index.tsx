@@ -9,6 +9,7 @@ import NotFound from '@/pages/NotFound'
 import Register from '@/pages/Register'
 import PerformanceDashboard from '@/pages/PerformanceDashboard'
 import { ApiKeyManager } from '@/pages/ApiKeyManager'
+import JSErrorLog from '@/pages/JsErrorLog'
 
 export const router = createBrowserRouter([
   {
@@ -18,6 +19,9 @@ export const router = createBrowserRouter([
       { index: true, element: <Home /> },
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'projectList', element: <ProjectList /> },
+      { path: 'jSErrorLog', element: <JSErrorLog /> },
+
+      
       { path: 'userList', element: <UserList /> },
       { path: 'performanceDashboard', element: <PerformanceDashboard /> },
       { path: 'apiKeyManager/:id', element: <ApiKeyManager /> },

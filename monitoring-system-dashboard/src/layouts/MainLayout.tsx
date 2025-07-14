@@ -17,7 +17,7 @@ const { Title } = Typography;
 const items = [
   { key: "/", icon: <PieChartOutlined />, label: "首页" },
   { key: "/performanceDashboard", icon: <DesktopOutlined />, label: "性能" },
-  { key: "3", icon: <UserOutlined />, label: "JS错误" },
+  { key: "/jsErrorLog", icon: <UserOutlined />, label: "JS错误" },
   { key: "4", icon: <TeamOutlined />, label: "行为" },
   { key: "5", icon: <FileOutlined />, label: "设置" },
   { key: "/projectList", icon: <FileOutlined />, label: "项目" },

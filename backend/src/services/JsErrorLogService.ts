@@ -1,5 +1,5 @@
 import { AppDataSource } from "../data-source";
-import { PerformanceLog } from "../entities/PerformanceLog";
+import { JsErrorLog } from "../entities/JsErrorLog";
 import { Repository } from "typeorm";
 
 interface LogQueryFilters {
@@ -14,30 +14,30 @@ interface LogQueryFilters {
   limit: number;
 }
 
-export class PerformanceService {
-  private repo: Repository<PerformanceLog>;
+export class JsErrorLogService {
+  private repo: Repository<JsErrorLog>;
 
   constructor() {
-    this.repo = AppDataSource.getRepository(PerformanceLog);
+    this.repo = AppDataSource.getRepository(JsErrorLog);
   }
 
   // 单条创建
-  async create(data: Partial<PerformanceLog>): Promise<PerformanceLog> {
+  async create(data: Partial<JsErrorLog>): Promise<JsErrorLog> {
     const entry = this.repo.create(data);
     return this.repo.save(entry);
   }
 
   // 批量创建
   async createMany(
-    dataList: Partial<PerformanceLog>[]
-  ): Promise<PerformanceLog[]> {
+    dataList: Partial<JsErrorLog>[]
+  ): Promise<JsErrorLog[]> {
     const entries = this.repo.create(dataList);
     return this.repo.save(entries);
   }
 
   public async findWithFilters(
     filters: LogQueryFilters
-  ): Promise<PerformanceLog[]> {
+  ): Promise<JsErrorLog[]> {
     const query = this.repo
       .createQueryBuilder("log")
       
@@ -45,7 +45,7 @@ export class PerformanceService {
     if(filters.projectId) {
       query.andWhere("log.projectId = :projectId", { projectId: filters.projectId });
     }
-
+    
     if (filters.url) {
       query.andWhere("log.url LIKE :url", { url: `%${filters.url}%` });
     }

@@ -1,12 +1,20 @@
+import { collectClientInfo } from "./utils/client";
 export interface MonitorConfig {
-  appId: string
-  userId?: string
-  debug?: boolean
-  reportUrl: string
+  projectId: number;
+
+  apiKey: string;
+
+  userAgent?: string;
+  debug?: boolean;
+  reportUrl: string;
 }
 
-export let config: MonitorConfig
+export let config: MonitorConfig;
 
-export function initConfig(options: MonitorConfig) {
-  config = options
+export async function initConfig(options: MonitorConfig) {
+  const ua = await collectClientInfo();
+  config = {
+    ...options,
+    ...ua,
+  };
 }

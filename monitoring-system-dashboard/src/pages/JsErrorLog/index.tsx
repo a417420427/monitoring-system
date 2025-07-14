@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { Card, Typography, message } from "antd";
+import { Button, Card, Typography, message } from "antd";
 import PerformanceTable from "./tb";
-import { getPerformanceList, type PerformanceRecord } from "@/service/api/performanceService";
+import { getJsErrorList, type JsErrorRecord } from "@/service/api/jsError";
 
 const { Title } = Typography;
 
-const PerformanceDashboard: React.FC = () => {
-  const [data, setData] = useState<PerformanceRecord[]>([]);
+const JSErrorLog: React.FC = () => {
+  const [data, setData] = useState<JsErrorRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await getPerformanceList();
+      const res = await getJsErrorList();
       if (res.status === 200 && res.data.data) {
         setData(res.data.data || []);
       } else {
@@ -32,10 +32,12 @@ const PerformanceDashboard: React.FC = () => {
 
   return (
     <Card>
-      <Title level={3}>前端性能日志</Title>
+      <Title level={3}>前端性能日志 <Button type="primary" onClick={() => {
+        throw new Error('测试错误')
+      }}>刷新</Button></Title>
       <PerformanceTable data={data} loading={loading} />
     </Card>
   );
 };
 
-export default PerformanceDashboard;
+export default JSErrorLog;

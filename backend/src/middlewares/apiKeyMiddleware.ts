@@ -10,19 +10,14 @@ export const apiKeyMiddleware = async (
   next: NextFunction
 ) => {
 
-console.log('API key check:', {
-  path: req.path,
-  headers: req.headers,
-  query: req.query,
-  body: req.body,
-});
+
   if(!req.path.startsWith('/api/report')) {
     return next();
   }
 
 
   const apiKey = req.headers["x-api-key"] || req.query.apiKey || req.body.apiKey;
-  
+  console.log(req.query, req.body, req.headers)
   if (!apiKey || typeof apiKey !== "string") {
     return res.status(401).json({ success: false, message: "Missing API key" });
   }

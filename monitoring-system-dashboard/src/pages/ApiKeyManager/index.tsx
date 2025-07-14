@@ -10,7 +10,6 @@ import {
   Form,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import axios from "axios";
 import dayjs from "dayjs";
 import { useParams } from "react-router-dom";
 import {
@@ -37,6 +36,7 @@ export const ApiKeyManager: React.FC = () => {
         setData(res.data.data!);
       }
     } catch (err) {
+      console.log(err);
       message.error("获取 API Key 列表失败");
     } finally {
       setLoading(false);

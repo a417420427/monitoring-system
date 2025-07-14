@@ -7,12 +7,11 @@ import {
 } from "typeorm";
 import { Project } from "./Project";
 
-@Entity("performance_logs")
-export class PerformanceLog {
+@Entity("js_error_log")
+export class JsErrorLog {
   @PrimaryGeneratedColumn()
   id!: number;
   url!: string
-  
   // 用户 & 环境基础信息
   @Column() projectId?: number;
   @Column({ nullable: true }) lang?: string;
@@ -25,6 +24,8 @@ export class PerformanceLog {
   @Column({ nullable: true }) region?: string;
   @Column({ nullable: true }) city?: string;
 
+  @Column("text", { nullable: true }) 
+  message?: string;
   // 性能指标：统一存放 payload
   @Column("json", { nullable: true })
   payload?: Record<string, number>;

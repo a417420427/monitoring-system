@@ -29,10 +29,10 @@ export class ApiKeyController extends Controller {
    */
   @Post('/')
   public async create(
-    @Body() body: { projectId: number; label: string }
+    @Body() body: { appId: number; label: string }
   ): Promise<ServiceResponse<ApiKey | null>> {
     try {
-      const key = await this.service.generateKey(body.projectId, body.label);
+      const key = await this.service.generateKey(body.appId, body.label);
       return successResponse(key, 'API Key 创建成功');
     } catch (error) {
       this.setStatus(500);
@@ -45,10 +45,10 @@ export class ApiKeyController extends Controller {
    */
   @Get('/')
   public async list(
-    @Query() projectId: number
+    @Query() appId: number
   ): Promise<ServiceResponse<ApiKey[] | null>> {
     try {
-      const list = await this.service.listByProject(projectId);
+      const list = await this.service.listByProject(appId);
       return successResponse(list, 'API Key 列表获取成功');
     } catch (error) {
       this.setStatus(500);

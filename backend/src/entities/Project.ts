@@ -8,10 +8,10 @@ import {
   ManyToOne,
   UpdateDateColumn,
 } from "typeorm";
-import { ErrorLog } from "./ErrorLog";
 import { User } from "./User";
 import { PerformanceLog } from "./PerformanceLog";
 import { ApiKey } from "./ApiKey";
+import { JsErrorLog } from "./JsErrorLog";
 
 @Entity("projects")
 export class Project {
@@ -36,8 +36,8 @@ export class Project {
   @Column({ type: "enum", enum: ["active", "inactive"], default: "active" })
   status: "active" | "inactive";
 
-  @OneToMany(() => ErrorLog, (error) => error.project)
-  errors!: ErrorLog[];
+  @OneToMany(() => JsErrorLog, (error) => error.project)
+  errors!: JsErrorLog[];
 
 
   @OneToMany(() => PerformanceLog, (performance) => performance.project)

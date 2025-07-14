@@ -7,6 +7,7 @@ import { report } from './reporter'
  * 报告的信息包括请求的URL、状态码（或错误信息）、请求耗时等。
  */
 export function initJsErrorListener() {
+  console.log('eventListend')
   window.addEventListener("error", (event: ErrorEvent) => {
     // 过滤资源加载错误（已由 resourceError 捕获）
     if (event.target !== window) return;
@@ -17,12 +18,12 @@ export function initJsErrorListener() {
       lineno: event.lineno,
       colno: event.colno,
       stack: event.error?.stack || null,
-      type: "jsError",
-      pageURL: location.href,
+      type: "jsErrorLog",
+      url: location.href,
       timestamp: Date.now(),
     };
 
-    report(errorInfo, "jsError");
+    report(errorInfo, "jsErrorLog");
   });
 
   window.addEventListener("unhandledrejection", (event) => {
@@ -32,10 +33,10 @@ export function initJsErrorListener() {
       message: reason?.message || String(reason),
       stack: reason?.stack || null,
       type: "promiseError",
-      pageURL: location.href,
+      url: location.href,
       timestamp: Date.now(),
     };
 
-    report(errorInfo, "jsError");
+    report(errorInfo, "jsErrorLog");
   });
 }
