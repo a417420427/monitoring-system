@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Button, Card, Typography, message } from "antd";
 import PerformanceTable from "./tb";
 import { getJsErrorList, type JsErrorRecord } from "@/service/api/jsError";
-
+import img from './braden-jarvis-prSogOoFmkw-unsplash.jpg'
 const { Title } = Typography;
 
 const JSErrorLog: React.FC = () => {
@@ -36,6 +36,8 @@ const JSErrorLog: React.FC = () => {
         throw new Error('测试错误')
       }}>刷新</Button></Title>
       <PerformanceTable data={data} loading={loading} />
+
+      <img src={img} alt="" />
     </Card>
   );
 };

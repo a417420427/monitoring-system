@@ -19,7 +19,7 @@ export interface PerformanceRecord {
   country: string;
   region: string;
   city: string;
-  metrics: PerformanceMetrics;
+  payload: PerformanceMetrics;
   clientTimestamp: string;
   createdAt: string;
 }

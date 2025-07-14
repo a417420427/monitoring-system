@@ -1,6 +1,6 @@
 import { initConfig, type MonitorConfig } from "./config";
 
-import { collectPerformanceMetrics } from "./performance";
+import { initPerformanceSDK } from "./performance";
 
 import { initJsErrorListener } from "./jsError";
 
@@ -23,7 +23,7 @@ export async function initMonitor(options: MonitorConfig) {
     return
   }
   await initConfig(options);
-  collectPerformanceMetrics();
+  initPerformanceSDK();
   initJsErrorListener();
   initResourceErrorListener();
   initNetworkErrorListener();
