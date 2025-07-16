@@ -31,6 +31,8 @@ export interface ReportResponse {
 }
 
 // 上报性能日志
-export const getJsErrorList = () => {
-  return http.get<ServiceResponse<JsErrorRecord[]>>("/report/jsErrorLog/list");
+export const getJsErrorList = (page: PageNationMeta) => {
+  return http.get<ServiceResponse<JsErrorRecord[]>>("/report/jsErrorLog/list", {
+    params: page
+  });
 };

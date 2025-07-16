@@ -6,6 +6,8 @@ import { AppDataSource } from "../data-source";
 import {
   errorResponse,
   ServiceResponse,
+  ServiceResponseWithPage,
+  successPageResponse,
   successResponse,
 } from "../services/ResponseService";
 
@@ -81,8 +83,9 @@ export class PerformanceController extends Controller {
   // 查询最近的若干条
   @Get("/list")
   public async listPerformanceLogs(
+    @Query() page: number,
+    @Query() size: number,
     @Query() projectId?: number,
-    @Query() limit: number = 50,
     @Query() url?: string,
     @Query() deviceType?: string,
     @Query() os?: string,
@@ -90,11 +93,13 @@ export class PerformanceController extends Controller {
     @Query() country?: string,
     @Query() startTime?: string,
     @Query() endTime?: string
-  ): Promise<ServiceResponse<PerformanceLog[] | null>> {
+  ): Promise<ServiceResponseWithPage<PerformanceLog[] | null>> {
 
 
     try {
       const response = await this.service.findWithFilters({
+        page,
+        size,
         projectId,
         url,
         deviceType,
@@ -103,9 +108,8 @@ export class PerformanceController extends Controller {
         country,
         startTime,
         endTime,
-        limit,
       });
-      return successResponse(response, "接口查询成功");
+      return successPageResponse(...response, page, size, "接口查询成功");
     } catch (error) {
       console.log(error, 'eeeeeeee')
       this.setStatus(500);

@@ -18,8 +18,8 @@ export const createApiKey = (data: CreateApiKeyPayload) => {
   return http.post<ServiceResponse<ApiKeyResponse>>("/apikeys", data);
 };
 
-export const getApiKeys = (projectId: number) => {
-  return http.get<ServiceResponse<ApiKeyResponse[]>>(`/apikeys?projectId=${projectId}`);
+export const getApiKeys = (params: { projectId: number; page: number; size: number }) => {
+  return http.get<ServiceResponse<ApiKeyResponse[]>>(`/apikeys`, { params: params });
 };
 
 export const toggleApiKeyStatus = (

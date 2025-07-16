@@ -15,7 +15,7 @@ const lateMetricsBuffer: Record<string, number> = {};
 const METRICS_CONFIG = {
   LOAD_METRICS: new Set([
     "dnsTime", "tcpTime", "sslTime", "ttfb", "responseTime",
-    "domContentLoaded", "domParseTime", "loadTime", "fp", "fcp"
+    "domContentLoaded", "domParseTime", "loadTime", "fcp"
   ]),
   DELAYED_METRICS: new Set(["lcp", "inp", "fid", "cls", "tbt"]),
   MAX_WAIT_TIME: 10000
@@ -24,33 +24,53 @@ const METRICS_CONFIG = {
 let loadMetricsCollected = false;
 let delayedMetricsTimer: number | null = null;
 let delayedReported = false;
+let pageIdCounter = 0;
 
-// 当前页面唯一标识，方便区分不同页面数据
+// 生成更可靠的页面ID
+function generatePageId(): string {
+  return `${Date.now()}-${pageIdCounter++}-${Math.random().toString(16).slice(2, 8)}`;
+}
+
 let currentPageId = generatePageId();
 
-function generatePageId() {
-  return `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+function sendReport(immediate = false): void {
+  try {
+    // 使用副本避免竞争条件
+    const currentMetrics = { ...metricsBuffer };
+    const currentLateMetrics = { ...lateMetricsBuffer };
+
+    if (Object.keys(currentMetrics).length > 0) {
+      report({ 
+        ...currentMetrics, 
+        pageId: currentPageId, 
+        url: location.href 
+      }, "performance");
+      
+      // 仅删除已上报的指标
+      Object.keys(currentMetrics).forEach((k) => delete metricsBuffer[k]);
+    }
+
+    if (immediate && Object.keys(currentLateMetrics).length > 0) {
+      report({ 
+        ...currentLateMetrics, 
+        pageId: currentPageId, 
+        url: location.href 
+      }, "performance-late");
+      
+      Object.keys(currentLateMetrics).forEach((k) => delete lateMetricsBuffer[k]);
+      delayedReported = true;
+    }
+  } catch (e) {
+    console.error("Performance report failed:", e);
+  } finally {
+    if (delayedMetricsTimer) {
+      clearTimeout(delayedMetricsTimer);
+      delayedMetricsTimer = null;
+    }
+  }
 }
 
-function sendReport(immediate = false) {
-  if (Object.keys(metricsBuffer).length > 0) {
-    report({ ...metricsBuffer, pageId: currentPageId, url: location.href }, "performance");
-    Object.keys(metricsBuffer).forEach((k) => delete metricsBuffer[k]);
-  }
-
-  if (immediate && Object.keys(lateMetricsBuffer).length > 0) {
-    report({ ...lateMetricsBuffer, pageId: currentPageId, url: location.href }, "performance-late");
-    Object.keys(lateMetricsBuffer).forEach((k) => delete lateMetricsBuffer[k]);
-    delayedReported = true;
-  }
-
-  if (delayedMetricsTimer) {
-    clearTimeout(delayedMetricsTimer);
-    delayedMetricsTimer = null;
-  }
-}
-
-function resetState() {
+function resetState(): void {
   Object.keys(metricsBuffer).forEach((k) => delete metricsBuffer[k]);
   Object.keys(lateMetricsBuffer).forEach((k) => delete lateMetricsBuffer[k]);
   loadMetricsCollected = false;
@@ -62,24 +82,21 @@ function resetState() {
   currentPageId = generatePageId();
 }
 
-// 路由切换前，强制上报并重置状态
-function flushBeforeRouteChange() {
+function flushBeforeRouteChange(): void {
   if (!delayedReported) {
     sendReport(true);
   }
   resetState();
 }
 
-function checkAndReport(metricName: string) {
-  metricsBuffer[metricName] = metricsBuffer[metricName] ?? 0;
-
+function checkAndReport(metricName: string): void {
+  // 不再初始化默认值，仅检查是否存在
   if (METRICS_CONFIG.LOAD_METRICS.has(metricName)) {
     const allCollected = Array.from(METRICS_CONFIG.LOAD_METRICS)
-      .every(metric => metricsBuffer[metric] !== undefined);
+      .every(metric => metric in metricsBuffer);
 
     if (allCollected && !loadMetricsCollected) {
       loadMetricsCollected = true;
-
       delayedMetricsTimer = window.setTimeout(() => {
         if (!delayedReported) {
           sendReport(true);
@@ -91,7 +108,7 @@ function checkAndReport(metricName: string) {
   if (METRICS_CONFIG.DELAYED_METRICS.has(metricName)) {
     lateMetricsBuffer[metricName] = metricsBuffer[metricName];
     const allCollected = Array.from(METRICS_CONFIG.DELAYED_METRICS)
-      .every(metric => lateMetricsBuffer[metric] !== undefined);
+      .every(metric => metric in lateMetricsBuffer);
 
     if (allCollected && !delayedReported) {
       sendReport(true);
@@ -99,20 +116,26 @@ function checkAndReport(metricName: string) {
   }
 }
 
-function collectAndReport(key: string, value: number) {
-  metricsBuffer[key] = value;
-  checkAndReport(key);
+function collectAndReport(key: string, value: number): void {
+  // 不覆盖已有值（确保web-vitals的指标优先级高于navigation timing）
+  if (metricsBuffer[key] === undefined) {
+    metricsBuffer[key] = value;
+    checkAndReport(key);
+  }
 }
 
-// 页面卸载或隐藏时上报剩余延迟指标
-function registerUnloadHandlers() {
+function registerUnloadHandlers(): void {
   const sendLateMetrics = () => {
     if (!delayedReported) {
       sendReport(true);
     }
   };
 
-  window.addEventListener("beforeunload", sendLateMetrics);
+  window.addEventListener("beforeunload", () => {
+    if (delayedMetricsTimer) clearTimeout(delayedMetricsTimer);
+    sendLateMetrics();
+  });
+
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
       sendLateMetrics();
@@ -120,8 +143,7 @@ function registerUnloadHandlers() {
   });
 }
 
-// 1. 导航阶段指标
-function collectNavigationTiming(timing: PerformanceNavigationTiming) {
+function collectNavigationTiming(timing: PerformanceNavigationTiming): void {
   collectAndReport("dnsTime", timing.domainLookupEnd - timing.domainLookupStart);
   collectAndReport("tcpTime", timing.connectEnd - timing.connectStart);
   collectAndReport("sslTime", timing.secureConnectionStart > 0 ? timing.connectEnd - timing.secureConnectionStart : 0);
@@ -130,11 +152,10 @@ function collectNavigationTiming(timing: PerformanceNavigationTiming) {
   collectAndReport("domContentLoaded", timing.domContentLoadedEventEnd - timing.startTime);
   collectAndReport("domParseTime", timing.domComplete - timing.domInteractive);
   collectAndReport("loadTime", timing.loadEventEnd - timing.startTime);
-  collectAndReport("fp", timing.responseStart - timing.requestStart); // 可重写为真正 FP
+  // 移除 fp 的采集，完全依赖 collectPaintMetrics
 }
 
-// 2. Paint 阶段指标
-function collectPaintMetrics() {
+function collectPaintMetrics(): void {
   const entries = performance.getEntriesByType("paint");
   entries.forEach((entry) => {
     if (entry.name === 'first-paint') {
@@ -145,36 +166,34 @@ function collectPaintMetrics() {
   });
 }
 
-// 3. Web Vitals
-function collectWebVitals() {
+function collectWebVitals(): void {
   onLCP(metric => collectAndReport("lcp", metric.value));
-  onFCP(metric => collectAndReport("fcp", metric.value));
+  onFCP(metric => {
+    // 确保web-vitals的fcp覆盖navigation timing的fcp
+    metricsBuffer["fcp"] = metric.value;
+    checkAndReport("fcp");
+  });
   onTTFB(metric => collectAndReport("ttfb", metric.value));
   onINP(metric => collectAndReport("inp", metric.value));
-  // onFID(metric => collectAndReport("fid", metric.value));
+
   onCLS(metric => collectAndReport("cls", metric.value));
 }
 
-// 4. 阻塞时间 TBT
-function collectLongTasks() {
+function collectLongTasks(): void {
   const observer = new PerformanceObserver((list) => {
-    let totalBlockingTime = 0;
-    for (const entry of list.getEntries()) {
-      const blocking = entry.duration - 50;
-      if (blocking > 0) {
-        totalBlockingTime += blocking;
-      }
-    }
-    collectAndReport("tbt", totalBlockingTime);
+    const longTasks = performance.getEntriesByType("longtask");
+    const tbt = longTasks.reduce((sum, entry) => {
+      return sum + Math.max(entry.duration - 50, 0);
+    }, 0);
+    collectAndReport("tbt", tbt);
   });
 
   observer.observe({ type: "longtask", buffered: true });
 }
 
-// 主入口
-export function collectPerformanceMetrics() {
+function collectPerformanceMetrics(): void {
   const collect = () => {
-    const [timing] = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
+    const [timing] = performance.getEntriesByType?.("navigation") || [];
     if (timing) {
       collectNavigationTiming(timing);
     }
@@ -192,15 +211,21 @@ export function collectPerformanceMetrics() {
   }
 }
 
-// 监听 History 路由变化（支持 SPA）
-function patchHistoryEvents() {
+function patchHistoryEvents(): void {
   const rawPush = history.pushState;
   const rawReplace = history.replaceState;
 
   function handleRouteChange() {
     flushBeforeRouteChange();
+    // 同步采集关键指标
+    const [timing] = performance.getEntriesByType?.("navigation") || [];
+    if (timing) collectNavigationTiming(timing);
+    collectPaintMetrics();
+    
+    // 异步采集其他指标
     setTimeout(() => {
-      collectPerformanceMetrics();
+      collectWebVitals();
+      collectLongTasks();
     }, 0);
   }
 
@@ -217,8 +242,7 @@ function patchHistoryEvents() {
   window.addEventListener("popstate", handleRouteChange);
 }
 
-// 启动 SDK（供外部调用）
-export function initPerformanceSDK() {
-  collectPerformanceMetrics(); // 首屏采集
-  patchHistoryEvents();        // 路由变更自动采集
+export function initPerformanceSDK(): void {
+  collectPerformanceMetrics();
+  patchHistoryEvents();
 }

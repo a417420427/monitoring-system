@@ -3,6 +3,7 @@ import { config } from "./config";
 const reportEndpoints: Record<string, string> = {
   performance: "/performance",
   jsErrorLog: "/jsErrorLog",
+  resourceErrorLog: "/resourceErrorLog",
   behavior: "/behavior",
   // 你可以继续添加更多类型和对应路径
 };

@@ -3,6 +3,8 @@ import { PerformanceLog } from "../entities/PerformanceLog";
 import { Repository } from "typeorm";
 
 interface LogQueryFilters {
+  page: number;
+  size: number;
   projectId?: number;
   url?: string;
   deviceType?: string;
@@ -11,7 +13,6 @@ interface LogQueryFilters {
   country?: string;
   startTime?: string;
   endTime?: string;
-  limit: number;
 }
 
 export class PerformanceService {
@@ -37,7 +38,7 @@ export class PerformanceService {
 
   public async findWithFilters(
     filters: LogQueryFilters
-  ): Promise<PerformanceLog[]> {
+  ): Promise<[PerformanceLog[], number]> {
     const query = this.repo
       .createQueryBuilder("log")
       
@@ -74,8 +75,8 @@ export class PerformanceService {
       });
     }
 
-    query.orderBy("log.clientTimestamp", "DESC").limit(filters.limit);
+    query.orderBy("log.clientTimestamp", "DESC").take(filters.size).skip((filters.page - 1) * filters.size);
 
-    return query.getMany();
+    return await query.getManyAndCount();
   }
 }

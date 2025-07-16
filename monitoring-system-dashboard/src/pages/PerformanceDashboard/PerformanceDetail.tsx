@@ -41,12 +41,13 @@ interface Props {
 
 const PerformanceDetail: React.FC<Props> = ({ data }) => {
   return (
-    <Card title="性能指标详情" style={{ maxWidth: 800, margin: "auto" }}>
+    <Card title="性能指标详情" style={{ margin: "auto" }}>
       <Descriptions
         bordered
         column={2}
         size="middle"
-        labelStyle={{ width: 180, fontWeight: "bold" }}
+        labelStyle={{ width: 220, fontWeight: "bold" }}
+        contentStyle={{ width: 200 }}
       >
         {(Object.keys(data) as (keyof PerformanceData)[]).map((key) => (
           <Descriptions.Item key={key} label={`${key} (${explanations[key] || ""})`}>

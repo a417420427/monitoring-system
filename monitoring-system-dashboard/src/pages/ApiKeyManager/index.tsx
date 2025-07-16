@@ -27,11 +27,16 @@ export const ApiKeyManager: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [form] = Form.useForm();
+  const [pagination, setPagination] = useState<PageNationMeta>({
+    page: 1,
+    size: 10,
+    total: 0,
+  });
 
-  const fetchKeys = async () => {
+  const fetchKeys = async (page = 1, size = 10) => {
     setLoading(true);
     try {
-      const res = await getApiKeys(Number(projectId));
+      const res = await getApiKeys({ projectId: Number(projectId), page, size });
       if (res.status === 200 && res.data.success) {
         setData(res.data.data!);
       }
@@ -42,6 +47,18 @@ export const ApiKeyManager: React.FC = () => {
       setLoading(false);
     }
   };
+
+
+    const handleTableChange = (pagination: any) => {
+    const { page, size } = pagination;
+    setPagination({
+      ...pagination,
+      page,
+      size,
+    });
+    fetchKeys(page, size);
+  };
+
 
   useEffect(() => {
     if (projectId) {
@@ -160,6 +177,16 @@ export const ApiKeyManager: React.FC = () => {
         columns={columns}
         dataSource={data}
         loading={loading}
+        onChange={handleTableChange}
+        pagination={{
+          current: pagination.page,
+          pageSize: pagination.size,
+          total: pagination.total,
+          showSizeChanger: true,
+          showQuickJumper: true,
+          showTotal: (total) => `共 ${total} 条`,
+          pageSizeOptions: ['10', '20', '50'],
+        }}
       />
       <Modal
         title="生成新 API Key"

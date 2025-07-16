@@ -7,7 +7,6 @@ import { report } from './reporter'
  * 报告的信息包括请求的URL、状态码（或错误信息）、请求耗时等。
  */
 export function initJsErrorListener() {
-  console.log('eventListend')
   window.addEventListener("error", (event: ErrorEvent) => {
     // 过滤资源加载错误（已由 resourceError 捕获）
     if (event.target !== window) return;

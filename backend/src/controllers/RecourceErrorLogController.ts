@@ -1,6 +1,6 @@
 import { Controller, Post, Route, Body, Tags, Get, Query } from "tsoa";
-import { JsErrorLogService } from "../services/JsErrorLogService";
-import { JsErrorLog } from "../entities/JsErrorLog";
+import { ResourceErrorLogService } from "../services/ResourceErrorLogService";
+import { ResourceErrorLog } from "../entities/ResourceErrorLog";
 
 import { AppDataSource } from "../data-source";
 import {
@@ -13,10 +13,10 @@ import {
 import { Project } from "../entities/Project";
 
 
-@Route("report/jsErrorLog")
-@Tags("JsErrorLog")
-export class JsErrorController extends Controller {
-  private service = new JsErrorLogService();
+@Route("report/recourceErrorLog")
+@Tags("ResourceErrorLog")
+export class ResourceErrorController extends Controller {
+  private service = new ResourceErrorLogService();
   private repo = AppDataSource.getRepository(Project);
   // 单条上报
   @Post("/")
@@ -59,38 +59,32 @@ export class JsErrorController extends Controller {
       return successResponse(null, '上报成功');
     } catch (err) {
       this.setStatus(500);
-      return errorResponse((err as Error).message || "上报失败");
+      return errorResponse((err as Error).message);
     }
   }
 
   // 批量上报接口
   @Post("/batch")
   public async batchReport(
-    @Body() body: Partial<JsErrorLog>[]
+    @Body() body: Partial<ResourceErrorLog>[]
   ): Promise<ServiceResponse<null>> {
     if (!Array.isArray(body) || body.length === 0) {
       this.setStatus(400);
-      return {
-        success: false,
-        message: "Request body must be a non-empty array",
-      };
+      return errorResponse("数据格式错误");
     }
     try {
       await this.service.createMany(body);
       return successResponse(null, '上报成功');
     } catch (err) {
       this.setStatus(500);
-      return errorResponse((err as Error).message || "上报失败");
+      return errorResponse((err as Error).message);
     }
   }
 
   // 查询最近的若干条
   @Get("/list")
   public async listPerformanceLogs(
-    @Query() page = 1,
-    @Query() size = 10,
     @Query() projectId?: number,
-    @Query() limit: number = 50,
     @Query() url?: string,
     @Query() deviceType?: string,
     @Query() os?: string,
@@ -98,13 +92,13 @@ export class JsErrorController extends Controller {
     @Query() country?: string,
     @Query() startTime?: string,
     @Query() endTime?: string,
-  ): Promise<ServiceResponseWithPage<JsErrorLog[] | null>> {
+     @Query("page") page = 1,
+    @Query("size") size = 10
 
+  ): Promise<ServiceResponseWithPage<ResourceErrorLog[] | null>> {
 
     try {
-      const [list, total] = await this.service.findWithFilters({
-        page,
-        size,
+      const [data, total] = await this.service.findWithFilters({
         projectId,
         url,
         deviceType,
@@ -113,9 +107,10 @@ export class JsErrorController extends Controller {
         country,
         startTime,
         endTime,
-        limit,
+        page,
+        size
       });
-      return successPageResponse(list, total, page, size, "接口查询成功");
+      return successPageResponse(data, total, page, size);
     } catch (error) {
       console.log(error, 'eeeeeeee')
       this.setStatus(500);

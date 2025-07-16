@@ -32,7 +32,13 @@ export interface ReportResponse {
 
 
 // 上报性能日志
-export const getPerformanceList = () => {
-  return http.get<ServiceResponse<PerformanceRecord[]>>("/report/performance/list");
+export const getPerformanceList = (page: PageNationMeta) => {
+  console.log(page)
+  return http.get<ServiceResponse<PerformanceRecord[]>>("/report/performance/list", {
+    params: {
+      page: page.page,
+      size: page.size,
+    },
+  });
 };
 

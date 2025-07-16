@@ -9,12 +9,16 @@
 
     <script>
            MonitorSDK.initMonitor({
-          appId: "your-app-id",
-          reportUrl: "https://api.yourdomain.com/monitor",
-          userId: "user-123",
-          debug: true,
-        });
+  projectId: 1,
+  debug: true,
+  apiKey: "mon_04a1a132e425c7e71531adac837791d8456a2576925594a6",
+  reportUrl: "http://localhost:5173/api/report",
+})
 
+
+window.addEventListener('error', e => {
+  console.log(e, 'headdddd')
+})
     </script>
   </head>
   <body>

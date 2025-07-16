@@ -23,26 +23,28 @@ import {
   type ProjectResponse,
 } from "@/service/api/project";
 import dayjs from "dayjs";
-import { useUserStore } from "@/store/user";
 import { useNavigate } from "react-router-dom";
 
 const { Title } = Typography;
 
-const initialProjects: ProjectResponse[] = [];
+
 
 const ProjectList: React.FC = () => {
-  const [projects, setProjects] = useState(initialProjects);
+  const [projects, setProjects] = useState<ProjectResponse[]>([]);
+  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [pagination, setPagination] = useState<PageNationMeta>({
+    page: 1,
+    size: 10,
+    total: 0,
+  });
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const store = useUserStore();
-  const handleCreate = async () => {
-    console.log(isEditing);
 
+  const handleCreate = async () => {
     try {
       const values = await form.validateFields();
-      console.log(values, isEditing);
       if (isEditing) {
         const response = await updateProject(values.id, {
           status: values.status,
@@ -50,7 +52,7 @@ const ProjectList: React.FC = () => {
         const { data, status } = response;
         if (status === 200 && data.data) {
           message.success("项目修改成功");
-          initProjects();
+          fetchProjects(pagination.page, pagination.size);
         }
       } else {
         const response = await createProject({
@@ -61,47 +63,79 @@ const ProjectList: React.FC = () => {
         const { data, status } = response;
         if (status === 200 && data.data) {
           message.success("项目创建成功");
-          initProjects();
+          fetchProjects(1, pagination.size); // 创建后回到第一页
         }
       }
 
       form.resetFields();
       setIsModalOpen(false);
     } catch (err) {
-      console.log(err);
-      message.error("创建失败，请检查输入");
+      console.error(err);
+      message.error("操作失败，请检查输入");
     }
   };
 
   const handleDelete = async (id: number) => {
-    const response = await deleteProject(id);
-    const { data, status } = response;
-    if (status === 200 && data.success) {
-      message.success("项目删除成功");
-      initProjects();
+    try {
+      const response = await deleteProject(id);
+      const { data, status } = response;
+      if (status === 200 && data.success) {
+        message.success("项目删除成功");
+        // 如果当前页只剩一条数据，且不是第一页，则返回上一页
+        const newCurrent = 
+          projects.length === 1 && pagination.page > 1 
+            ? pagination.page - 1 
+            : pagination.page;
+        fetchProjects(newCurrent, pagination.size);
+      }
+    } catch (error) {
+      console.log(error)
+      message.error("删除失败");
     }
   };
+
   const onEditRow = (row: ProjectResponse) => {
     setIsEditing(true);
     form.setFieldsValue(row);
     setIsModalOpen(true);
   };
-  const initProjects = async () => {
-    const response = await getProjects();
 
-    const { data, status } = response;
-    if (status === 200 && data.data && data.success) {
-      setProjects(data.data!.data);
-
-      if (data.data.total) {
+  const fetchProjects = async (page: number = 1, size: number = 5) => {
+    try {
+      setLoading(true);
+      const response = await getProjects({ page, size });
+      
+      const { data, status } = response;
+      if (status === 200 && data.data && data.success) {
+        setProjects(data.data || []);
+        setPagination({
+          page: data.meta!.page || page,
+          size: data.meta!.size || size,
+          total: data.meta!.total || 0,
+        });
       }
-      // setProjects(data.data)
+    } catch (error) {
+      console.error('获取项目列表失败:', error);
+      message.error("获取项目列表失败");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleTableChange = (pagination: any) => {
+    const { page, size } = pagination;
+    setPagination({
+      ...pagination,
+      page,
+      size,
+    });
+    fetchProjects(page, size);
+  };
+
   useEffect(() => {
-    initProjects();
+    fetchProjects(pagination.page, pagination.size);
   }, []);
+
   const columns: TableProps<ProjectResponse>["columns"] = [
     {
       title: "项目名称",
@@ -119,30 +153,24 @@ const ProjectList: React.FC = () => {
     {
       title: "API Key",
       dataIndex: "id",
-      render: (id: string) => {
-        return (
-          <Tag
-            onClick={() => navigate(`/apiKeyManager/${id}`)}
-            style={{ cursor: "pointer" }}
-          >
-            查看
-          </Tag>
-        );
-      },
+      render: (id: string) => (
+        <Tag
+          onClick={() => navigate(`/apiKeyManager/${id}`)}
+          style={{ cursor: "pointer" }}
+        >
+          查看
+        </Tag>
+      ),
     },
     {
       title: "创建时间",
       dataIndex: "createdAt",
-      render(text) {
-        return dayjs(text).format("YYYY-MM-DD HH:mm:ss");
-      },
+      render: (text) => dayjs(text).format("YYYY-MM-DD HH:mm:ss"),
     },
     {
       title: "更新时间",
       dataIndex: "updatedAt",
-      render(text) {
-        return dayjs(text).format("YYYY-MM-DD HH:mm:ss");
-      },
+      render: (text) => dayjs(text).format("YYYY-MM-DD HH:mm:ss"),
     },
     {
       title: "状态",
@@ -162,7 +190,7 @@ const ProjectList: React.FC = () => {
           </Button>
           <Popconfirm
             placement="top"
-            title={"是否确定删除该项目"}
+            title="是否确定删除该项目"
             okText="是"
             cancelText="否"
             onConfirm={() => handleDelete(record.id)}
@@ -195,7 +223,17 @@ const ProjectList: React.FC = () => {
         rowKey="id"
         columns={columns}
         dataSource={projects}
-        pagination={{ pageSize: 5 }}
+        loading={loading}
+        pagination={{
+          current: pagination.page,
+          pageSize: pagination.size,
+          total: pagination.total,
+          showSizeChanger: true,
+          showQuickJumper: true,
+          showTotal: (total) => `共 ${total} 条`,
+          pageSizeOptions: ['10', '20', '50'],
+        }}
+        onChange={handleTableChange}
       />
 
       <Modal
@@ -247,23 +285,3 @@ const ProjectList: React.FC = () => {
 };
 
 export default ProjectList;
-
-function mockError() {
-  const normalErr = () => {
-    throw new Error("xxxxxx");
-  };
-
-  const promiseError = () => {
-    return new Promise((resolve, reject) => {
-      reject(new Error("xxxxxx"));
-    });
-  };
-
-  setTimeout(() => {
-    normalErr();
-  }, 2000);
-
-  setTimeout(() => {
-    promiseError();
-  }, 2000);
-}

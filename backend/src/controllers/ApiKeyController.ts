@@ -17,6 +17,8 @@ import {
   ServiceResponse,
   successResponse,
   errorResponse,
+  successPageResponse,
+  ServiceResponseWithPage,
 } from '../services/ResponseService';
 
 @Route('apikeys')
@@ -45,11 +47,13 @@ export class ApiKeyController extends Controller {
    */
   @Get('/')
   public async list(
-    @Query() appId: number
-  ): Promise<ServiceResponse<ApiKey[] | null>> {
+    @Query() projectId: number,
+    @Query() page: number,
+    @Query() size: number
+  ): Promise<ServiceResponseWithPage<ApiKey[] | null>> {
     try {
-      const list = await this.service.listByProject(appId);
-      return successResponse(list, 'API Key 列表获取成功');
+      const [list, total] = await this.service.listByProject(projectId, page, size);
+      return successPageResponse(list, total, page, size, 'API Key 列表获取成功');
     } catch (error) {
       this.setStatus(500);
       return errorResponse('获取 API Key 列表失败');

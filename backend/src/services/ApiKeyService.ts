@@ -16,11 +16,15 @@ export class ApiKeyService {
     return this.repo.save(entry);
   }
 
-  async listByProject(projectId: number): Promise<ApiKey[]> {
-    return this.repo.find({
+  async listByProject(projectId: number, page: number, size: number): Promise<[ApiKey[], number]> {
+    const [data, total] = await this.repo.findAndCount({
       where: { projectId },
       order: { createdAt: "DESC" },
+      skip: (page - 1) * size,
+      take: size
     });
+
+    return [data, total]
   }
 
   async toggleActive(id: number, status: "enabled" | "disabled"): Promise<void> {

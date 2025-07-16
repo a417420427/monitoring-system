@@ -26,15 +26,15 @@ export const createProject = (data: ProjectPayload) => {
   return http.post<ServiceResponse<ProjectResponse>>("/projects", data);
 };
 
-export const getProjects = () => {
+export const getProjects = (page: PageNationMeta) => {
   return http.get<
-    ServiceResponse<{
-      data: ProjectResponse[];
-      page: number;
-      size: number;
-      total: number;
-    }>
-  >("/projects/list");
+    ServiceResponse<ProjectResponse[]>
+  >("/projects/list", {
+    params: {
+      page: page.page,
+      size: page.size,
+    }
+  });
 };
 
 export const deleteProject = (id: number) => {

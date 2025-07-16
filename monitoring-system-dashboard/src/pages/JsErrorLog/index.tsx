@@ -1,45 +1,147 @@
 import React, { useEffect, useState } from "react";
-import { Button, Card, Typography, message } from "antd";
-import PerformanceTable from "./tb";
+import { Table, Tag, Typography, message } from "antd";
+import dayjs from "dayjs";
 import { getJsErrorList, type JsErrorRecord } from "@/service/api/jsError";
-import img from './braden-jarvis-prSogOoFmkw-unsplash.jpg'
+import type { ColumnsType } from "antd/es/table";
+
 const { Title } = Typography;
 
-const JSErrorLog: React.FC = () => {
-  const [data, setData] = useState<JsErrorRecord[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+const ProjectList: React.FC = () => {
+  const [projects, setProjects] = useState<JsErrorRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState<PageNationMeta>({
+    page: 1,
+    size: 10,
+    total: 0,
+  });
 
-  const fetchData = async () => {
+  const fetchList = async (page: number = 1, size: number = 5) => {
     try {
       setLoading(true);
-      const res = await getJsErrorList();
-      if (res.status === 200 && res.data.data) {
-        setData(res.data.data || []);
-      } else {
-        message.error(res.data.message || "获取数据失败");
+      const response = await getJsErrorList({ page, size });
+
+      const { data, status } = response;
+      if (status === 200 && data.data && data.success) {
+        setProjects(data.data || []);
+        setPagination({
+          page: data.meta!.page || page,
+          size: data.meta!.size || size,
+          total: data.meta!.total || 0,
+        });
       }
     } catch (error) {
-      console.log(error)
-      message.error("请求失败");
+      console.error("获取项目列表失败:", error);
+      message.error("获取项目列表失败");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleTableChange = (pagination: any) => {
+    const { page, size } = pagination;
+    setPagination({
+      ...pagination,
+      page,
+      size,
+    });
+    fetchList(page, size);
+  };
+
   useEffect(() => {
-    fetchData();
+    fetchList(pagination.page, pagination.size);
   }, []);
 
-  return (
-    <Card>
-      <Title level={3}>前端性能日志 <Button type="primary" onClick={() => {
-        throw new Error('测试错误')
-      }}>刷新</Button></Title>
-      <PerformanceTable data={data} loading={loading} />
+  const columns: ColumnsType<JsErrorRecord> = [
+    {
+      title: "Project ID",
+      dataIndex: "projectId",
+      key: "projectId",
+      width: 120,
+    },
+    {
+      title: "页面URL",
+      dataIndex: ["payload", "url"],
+      key: "url",
+      ellipsis: true,
+      render: (text) => (
+        <a href={text} target="_blank" rel="noreferrer">
+          {text}
+        </a>
+      ),
+    },
+    {
+      title: "错误信息",
+      dataIndex: "message",
+      key: "message",
+      render: (text) => <Tag color="red">{text}</Tag>,
+      ellipsis: true,
+    },
+    {
+      title: "错误类型",
+      dataIndex: ["payload", "type"],
 
-      <img src={img} alt="" />
-    </Card>
+      key: "type",
+      render: (text) => <Tag color="orange">{text}</Tag>,
+    },
+    {
+      title: "文件位置",
+      key: "source",
+      render: (_, row) =>
+        row.payload ? (
+          <span>
+            {row.payload.filename}:{row.payload.lineno}:{row.payload.colno}
+          </span>
+        ) : null,
+    },
+    {
+      title: "设备信息",
+      key: "device",
+      render: (_, record) => (
+        <div>
+          <div>{record.os}</div>
+          <div>{record.browser}</div>
+          {record.deviceType && <Tag>{record.deviceType}</Tag>}
+        </div>
+      ),
+    },
+    {
+      title: "发生时间",
+      dataIndex: "timestamp",
+      key: "timestamp",
+      render: (timestamp) => dayjs(timestamp).format("YYYY-MM-DD HH:mm:ss"),
+      sorter: (a, b) => a.clientTimestamp - b.clientTimestamp,
+    },
+    {
+      title: "操作",
+      key: "action",
+      render: (_, record) => (
+        <a onClick={() => console.log(record.payload?.stack)}>查看堆栈</a>
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <Title level={3}>错误列表</Title>
+
+      <Table
+        rowKey="id"
+        columns={columns}
+        dataSource={projects}
+        loading={loading}
+        pagination={{
+          current: pagination.page,
+          pageSize: pagination.size,
+          total: pagination.total,
+          showSizeChanger: true,
+          showQuickJumper: true,
+          showTotal: (total) => `共 ${total} 条`,
+          pageSizeOptions: ["10", "20", "50"],
+        }}
+        onChange={handleTableChange}
+      />
+    </>
   );
 };
 
-export default JSErrorLog;
+export default ProjectList;

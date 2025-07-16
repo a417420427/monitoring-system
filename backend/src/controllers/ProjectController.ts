@@ -18,6 +18,8 @@ import {
   ServiceResponse,
   successResponse,
   errorResponse,
+  ServiceResponseWithPage,
+  successPageResponse,
 } from "../services/ResponseService"; // 修改路径按需调整
 import { v4 as uuidv4 } from "uuid";
 import { AppDataSource } from "../data-source";
@@ -41,7 +43,7 @@ export class ProjectController extends Controller {
       const project = await this.service.create({
         ...body,
         appId,
-        user: req.user
+        user: req.user,
       });
       return successResponse(project, "Project created successfully");
     } catch (error) {
@@ -55,14 +57,7 @@ export class ProjectController extends Controller {
     @Request() req: any,
     @Query("page") page = 1,
     @Query("size") size = 10
-  ): Promise<
-    ServiceResponse<{
-      data: Project[];
-      total: number;
-      page: number;
-      size: number;
-    } | null>
-  > {
+  ): Promise<ServiceResponseWithPage<Project[] | null>> {
     try {
       const user = req.user;
       const take = Number(size); // 每页数量
@@ -75,15 +70,7 @@ export class ProjectController extends Controller {
         take,
       });
 
-      return successResponse(
-        {
-          data,
-          total,
-          page: Number(page),
-          size: Number(size),
-        },
-        "Projects retrieved successfully"
-      );
+      return successPageResponse(data, total, Number(page), Number(size));
     } catch (error) {
       this.setStatus(500);
       return errorResponse("Failed to fetch projects");
@@ -139,23 +126,23 @@ export class ProjectController extends Controller {
   }
 
   /**
- * 删除项目接口
- * DELETE /projects/{id}
- */
-@Delete("/{id}")
-public async deleteProject(
-  @Path() id: number
-): Promise<ServiceResponse<null>> {
-  try {
-    const success = await this.service.delete(id);
-    if (!success) {
-      this.setStatus(404);
-      return errorResponse("未找到项目");
+   * 删除项目接口
+   * DELETE /projects/{id}
+   */
+  @Delete("/{id}")
+  public async deleteProject(
+    @Path() id: number
+  ): Promise<ServiceResponse<null>> {
+    try {
+      const success = await this.service.delete(id);
+      if (!success) {
+        this.setStatus(404);
+        return errorResponse("未找到项目");
+      }
+      return successResponse(null, "项目删除成功");
+    } catch (error) {
+      this.setStatus(500);
+      return errorResponse("服务错误，删除项目失败");
     }
-    return successResponse(null, "项目删除成功");
-  } catch (error) {
-    this.setStatus(500);
-    return errorResponse("服务错误，删除项目失败");
   }
-}
 }
